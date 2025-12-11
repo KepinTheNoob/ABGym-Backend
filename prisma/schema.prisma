@@ -13,8 +13,76 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int    @id @default(autoincrement())
-  email String @unique
-  name  String?
+enum MemberStatus {
+  Active
+  Expired
+  Expiring
+}
+
+enum TransactionCategory {
+  Membership
+  Maintenance
+  Retail
+  Other
+}
+
+enum TransactionType {
+  Income
+  Expense
+}
+
+enum PaymentMethod {
+  Cash
+  CreditCard
+  Transfer
+}
+
+model Members {
+  id         Int                   @id @default(autoincrement())
+  name         String
+  email             String                @unique
+  phone      String
+  dob               DateTime
+  address           String?
+  profilePhoto String?
+  status            MemberStatus
+  joinDate         DateTime
+  expirationDate   DateTime
+
+  planId   Int
+  plans      Plans      @relation(fields: [planId], references: [id])
+
+  transactions      Transactions[]
+  attendance        Attendance[]
+}
+
+model Plans {
+  id        Int       @id @default(autoincrement())
+  name           String
+  price          Decimal    @db.Decimal(10, 2)
+  durationDays  Int
+
+  members        Members[]
+}
+
+model Transactions {
+  id   Int               @id @default(autoincrement())
+  memberId        Int?
+  member           Members?          @relation(fields: [memberId], references: [id])
+
+  description      String
+  category         TransactionCategory
+  type             TransactionType
+  amount           Decimal           @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod
+  transactionDate DateTime
+}
+
+model Attendance {
+  id Int       @id @default(autoincrement())
+  memberId     Int
+  member        Members   @relation(fields: [memberId], references: [id])
+
+  checkInTime DateTime
+  checkOutTime DateTime?
 }
