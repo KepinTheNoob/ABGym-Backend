@@ -37,6 +37,13 @@ enum PaymentMethod {
   Transfer
 }
 
+enum DurationUnit {
+  Day
+  Week
+  Month
+  Year
+}
+
 model Members {
   id         Int                   @id @default(autoincrement())
   name         String
@@ -60,7 +67,8 @@ model Plans {
   id        Int       @id @default(autoincrement())
   name           String
   price          Decimal    @db.Decimal(10, 2)
-  durationDays  Int
+  durationValue  Int
+  durationUnit   DurationUnit
 
   members        Members[]
 }

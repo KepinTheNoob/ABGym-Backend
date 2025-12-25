@@ -48,6 +48,7 @@ export default class MembersController {
 
       successRes(res, newMember);
     } catch (error: any) {
+      console.log(error)
       if (errorUnique(error)) {
         errBadRequest(next, error.message);
         return;
