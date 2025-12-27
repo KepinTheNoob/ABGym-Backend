@@ -13,19 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum MemberStatus {
-  Active
-  Expired
-  Expiring
-}
-
-enum TransactionCategory {
-  Membership
-  Maintenance
-  Retail
-  Other
-}
-
 enum TransactionType {
   Income
   Expense
@@ -45,16 +32,15 @@ enum DurationUnit {
 }
 
 model Members {
-  id         Int                   @id @default(autoincrement())
-  name         String
+  id                String                   @id @default(uuid())
+  name              String
   email             String                @unique
-  phone      String
+  phone             String
   dob               DateTime
   address           String?
-  profilePhoto String?
-  status            MemberStatus
-  joinDate         DateTime
-  expirationDate   DateTime
+  profilePhoto      String?
+  joinDate          DateTime
+  expirationDate    DateTime
 
   planId   Int
   plans      Plans      @relation(fields: [planId], references: [id])
@@ -64,7 +50,7 @@ model Members {
 }
 
 model Plans {
-  id        Int       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String
   price          Decimal    @db.Decimal(10, 2)
   durationValue  Int
@@ -74,23 +60,32 @@ model Plans {
 }
 
 model Transactions {
-  id   Int               @id @default(autoincrement())
-  memberId        Int?
+  id               String               @id @default(uuid())
+  memberId         String?
+  categoryId       Int?
+  category         Categories?        @relation(fields: [categoryId], references: [id])
   member           Members?          @relation(fields: [memberId], references: [id])
 
   description      String
-  category         TransactionCategory
   type             TransactionType
   amount           Decimal           @db.Decimal(10, 2)
-  paymentMethod   PaymentMethod
-  transactionDate DateTime
+  paymentMethod    PaymentMethod
+  transactionDate  DateTime
 }
 
 model Attendance {
-  id Int       @id @default(autoincrement())
-  memberId     Int
+  id            String       @id @default(uuid())
+  memberId      String
   member        Members   @relation(fields: [memberId], references: [id])
 
-  checkInTime DateTime
-  checkOutTime DateTime?
+  checkInTime   DateTime
+  checkOutTime  DateTime?
+}
+
+model Categories {
+  id               Int               @id @default(autoincrement())
+  name             String
+  description      String
+
+  transactions Transactions[]
 }

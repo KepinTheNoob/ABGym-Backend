@@ -18,18 +18,18 @@ export default class TransactionsController {
     next: NextFunction
   ) {
     try {
-      const { memberId, description, category, type, amount, paymentMethod } =
+      const { memberId, categoryId, description, category, type, amount, paymentMethod } =
         req.body;
 
-      if (!category || !type || !amount || !paymentMethod) {
+      if (!categoryId || !type || !amount || !paymentMethod) {
         errBadRequest(next, locale.payloadInvalid);
       }
 
       const newTransaction = await prisma.transactions.create({
         data: {
           memberId,
+          categoryId,
           description,
-          category,
           type,
           amount,
           paymentMethod,
@@ -73,7 +73,7 @@ export default class TransactionsController {
 
       const transaction = await prisma.transactions.findUnique({
         where: {
-          id: Number(id),
+          id: String(id),
         },
       });
 
@@ -95,21 +95,21 @@ export default class TransactionsController {
   ) {
     try {
       const { id } = req.params;
-      const { memberId, description, category, type, amount, paymentMethod } =
+      const { memberId, categoryId, description, type, amount, paymentMethod } =
         req.body;
 
-      if (!category || !type || !amount || !paymentMethod) {
+      if (!categoryId || !type || !amount || !paymentMethod) {
         errBadRequest(next, locale.payloadInvalid);
       }
 
       const updateTransaction = await prisma.transactions.update({
         where: {
-          id: Number(id),
+          id: String(id),
         },
         data: {
           memberId,
+          categoryId,
           description,
-          category,
           type,
           amount,
           paymentMethod,
@@ -142,7 +142,7 @@ export default class TransactionsController {
 
       await prisma.transactions.delete({
         where: {
-          id: Number(id),
+          id: String(id),
         },
       });
 

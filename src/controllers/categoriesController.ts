@@ -11,28 +11,23 @@ import { locale } from "../locales";
 
 const prisma = new PrismaClient();
 
-export default class AttendancesController {
-  static async createAttendance(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+export default class CategoriesController {
+  static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const { memberId, checkInTime, checkOutTime } = req.body;
+      const { name, description } = req.body;
 
-      if (!memberId || !checkInTime) {
+      if (!name || !description) {
         errBadRequest(next, locale.payloadInvalid);
       }
 
-      const newAttendance = await prisma.attendance.create({
+      const newCategory = await prisma.categories.create({
         data: {
-          memberId,
-          checkInTime,
-          checkOutTime,
+          name,
+          description,
         },
       });
 
-      successRes(res, newAttendance);
+      successRes(res, newCategory);
     } catch (error: any) {
       if (errorUnique(error)) {
         errBadRequest(next, error.message);
@@ -43,11 +38,11 @@ export default class AttendancesController {
     }
   }
 
-  static async getAttendances(req: Request, res: Response, next: NextFunction) {
+  static async getCategories(req: Request, res: Response, next: NextFunction) {
     try {
-      const attendances = await prisma.attendance.findMany();
+      const categories = await prisma.categories.findMany();
 
-      successRes(res, attendances);
+      successRes(res, categories);
     } catch (error: any) {
       if (errorValidation(error)) {
         errBadRequest(next, error.message);
@@ -58,17 +53,17 @@ export default class AttendancesController {
     }
   }
 
-  static async getAttendance(req: Request, res: Response, next: NextFunction) {
+  static async getCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 
-      const attendance = await prisma.attendance.findUnique({
+      const Category = await prisma.categories.findUnique({
         where: {
-          id: String(id),
+          id: Number(id),
         },
       });
 
-      successRes(res, attendance);
+      successRes(res, Category);
     } catch (error: any) {
       if (errorValidation(error)) {
         errBadRequest(next, error.message);
@@ -79,31 +74,26 @@ export default class AttendancesController {
     }
   }
 
-  static async updateAttendance(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  static async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { memberId, checkInTime, checkOutTime } = req.body;
+      const { name, description } = req.body;
 
-      if (!memberId || !checkInTime) {
+      if (!name || !description) {
         errBadRequest(next, locale.payloadInvalid);
       }
 
-      const updateAttendance = await prisma.attendance.update({
+      const updateCategory = await prisma.categories.update({
         where: {
-          id: String(id),
+          id: Number(id),
         },
         data: {
-          memberId,
-          checkInTime,
-          checkOutTime,
+          name,
+          description
         },
       });
 
-      successRes(res, updateAttendance);
+      successRes(res, updateCategory);
     } catch (error: any) {
       if (errorUnique(error)) {
         errBadRequest(next, error.message);
@@ -119,17 +109,13 @@ export default class AttendancesController {
     }
   }
 
-  static async deleteAttendance(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  static async deleteCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 
-      await prisma.attendance.delete({
+      await prisma.categories.delete({
         where: {
-          id: String(id),
+          id: Number(id),
         },
       });
 
