@@ -84,21 +84,55 @@ export default class PlansController {
 
       if (!name || !price || !durationValue || !durationUnit) {
         errBadRequest(next, locale.payloadInvalid);
+        return;
       }
 
-      const updatePlan = await prisma.plans.update({
-        where: {
-          id: Number(id),
-        },
-        data: {
-          name,
-          price: Number(price),
-          durationValue: Number(durationValue),
-          durationUnit,
-        },
+      const result = await prisma.$transaction(async (tx) => {
+        const updatedPlan = await tx.plans.update({
+          where: { id: Number(id) },
+          data: {
+            name,
+            price: Number(price),
+            durationValue: Number(durationValue),
+            durationUnit,
+          },
+        });
+
+        const members = await tx.members.findMany({
+          where: { planId: Number(id) },
+        });
+
+        for (const member of members) {
+          const start = new Date(member.joinDate);
+          const expired = new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate()
+          );
+
+          if (durationUnit === "Day") {
+            expired.setDate(expired.getDate() + durationValue);
+          } else if (durationUnit === "Week") {
+            expired.setDate(expired.getDate() + durationValue * 7);
+          } else if (durationUnit === "Month") {
+            expired.setMonth(expired.getMonth() + durationValue);
+          } else if (durationUnit === "Year") {
+            expired.setFullYear(expired.getFullYear() + durationValue);
+          }
+          expired.setDate(expired.getDate() + 1);
+
+          expired.setUTCHours(23, 59, 0, 0);
+
+          await tx.members.update({
+            where: { id: member.id },
+            data: { expirationDate: expired },
+          });
+        }
+
+        return updatedPlan;
       });
 
-      successRes(res, updatePlan);
+      successRes(res, result);
     } catch (error: any) {
       if (errorUnique(error)) {
         errBadRequest(next, error.message);
