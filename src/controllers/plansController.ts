@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import {
   errBadRequest,
+  errConflict,
   errInternalServer,
   errorUnique,
   errorValidation,
@@ -125,6 +126,14 @@ export default class PlansController {
 
       successRes(res, locale.successfullyDeleted);
     } catch (error: any) {
+      if (error.code === "P2003") {
+        errConflict(
+          next,
+          "Cannot delete plan because it is assigned to existing members."
+        );
+        return;
+      }
+
       if (errorValidation(error)) {
         errBadRequest(next, error.message);
         return;

@@ -30,6 +30,15 @@ export default class MembersController {
         return;
       }
 
+      const existingMember = await prisma.members.findUnique({
+        where: { email },
+      });
+
+      if (existingMember) {
+        errBadRequest(next, "Email is already registered");
+        return;
+      }
+
       const plan = await prisma.plans.findUnique({
         where: { id: Number(planId) },
       });
@@ -72,7 +81,17 @@ export default class MembersController {
 
   static async getMembers(req: Request, res: Response, next: NextFunction) {
     try {
-      const members = await prisma.members.findMany();
+      const members = await prisma.members.findMany({
+        include: {
+          plans: {
+            select: {
+              name: true,
+              durationValue: true,
+              durationUnit: true,
+            },
+          },
+        },
+      });
 
       const result = members.map((member) => ({
         ...member,
@@ -229,7 +248,7 @@ function calculateExpiration(
   value: number,
   unit: "Day" | "Week" | "Month" | "Year"
 ) {
-  const date = new Date(start);
+  const date = new Date(start.getFullYear(), start.getMonth(), start.getDate());
 
   switch (unit) {
     case "Day":
@@ -245,8 +264,10 @@ function calculateExpiration(
       date.setFullYear(date.getFullYear() + value);
       break;
   }
+  date.setDate(date.getDate() + 1);
 
-  date.setHours(23, 59, 59, 999);
+  date.setUTCHours(23, 59, 59, 999);
+
   return date;
 }
 

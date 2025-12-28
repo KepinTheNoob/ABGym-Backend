@@ -29,6 +29,13 @@ export const errUnauthenticated = (next: NextFunction) => {
   });
 };
 
+export const errConflict = (next: NextFunction, msg: string) => {
+  return next({
+    status: 409,
+    msg,
+  });
+}
+
 export const errInternalServer = (next: NextFunction) => {
   return next({
     status: 500,
