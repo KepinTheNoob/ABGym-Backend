@@ -30,7 +30,7 @@ CREATE TABLE `Plans` (
 CREATE TABLE `Transactions` (
     `id` VARCHAR(191) NOT NULL,
     `memberId` VARCHAR(191) NULL,
-    `categoryId` INTEGER NULL,
+    `categoryId` INTEGER NOT NULL,
     `description` VARCHAR(191) NOT NULL,
     `type` ENUM('Income', 'Expense') NOT NULL,
     `amount` DECIMAL(10, 2) NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE `Categories` (
 ALTER TABLE `Members` ADD CONSTRAINT `Members_planId_fkey` FOREIGN KEY (`planId`) REFERENCES `Plans`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Transactions` ADD CONSTRAINT `Transactions_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `Categories`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Transactions` ADD CONSTRAINT `Transactions_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `Categories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Transactions` ADD CONSTRAINT `Transactions_memberId_fkey` FOREIGN KEY (`memberId`) REFERENCES `Members`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

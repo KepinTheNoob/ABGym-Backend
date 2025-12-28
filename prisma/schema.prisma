@@ -62,7 +62,7 @@ model Plans {
 model Transactions {
   id               String               @id @default(uuid())
   memberId         String?
-  categoryId       Int?
+  categoryId       Int
   category         Categories?        @relation(fields: [categoryId], references: [id])
   member           Members?          @relation(fields: [memberId], references: [id])
 

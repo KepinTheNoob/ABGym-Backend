@@ -18,8 +18,15 @@ export default class TransactionsController {
     next: NextFunction
   ) {
     try {
-      const { memberId, categoryId, description, category, type, amount, paymentMethod } =
-        req.body;
+      const {
+        memberId,
+        categoryId,
+        description,
+        category,
+        type,
+        amount,
+        paymentMethod,
+      } = req.body;
 
       if (!categoryId || !type || !amount || !paymentMethod) {
         errBadRequest(next, locale.payloadInvalid);
@@ -54,7 +61,15 @@ export default class TransactionsController {
     next: NextFunction
   ) {
     try {
-      const transactions = await prisma.transactions.findMany();
+      const transactions = await prisma.transactions.findMany({
+        include: {
+          category: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
 
       successRes(res, transactions);
     } catch (error: any) {

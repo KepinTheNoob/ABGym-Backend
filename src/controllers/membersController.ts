@@ -69,6 +69,31 @@ export default class MembersController {
         },
       });
 
+      let category = await prisma.categories.findFirst({
+        where: { name: "Membership" },
+      });
+
+      if (!category) {
+        category = await prisma.categories.create({
+          data: {
+            name: "Membership",
+            description: "Membership payments",
+          },
+        });
+      }
+
+      await prisma.transactions.create({
+        data: {
+          memberId: newMember.id,
+          categoryId: category.id,
+          description: `Membership payment - ${plan.name}`,
+          type: "Income",
+          amount: plan.price,
+          paymentMethod: "Cash",
+          transactionDate: new Date(),
+        },
+      });
+
       successRes(res, newMember);
     } catch (error: any) {
       if (errorUnique(error)) {
