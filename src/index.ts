@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import { attendancesRouter, categoriesRouter, membersRouter, plansRouter, transactionsRouter } from "./routes";
+import { startScannerServer } from "./scanner/scanner.ws";
 
 const prisma = new PrismaClient();
 
@@ -20,3 +21,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+startScannerServer();

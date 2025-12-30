@@ -22,7 +22,6 @@ export default class TransactionsController {
         memberId,
         categoryId,
         description,
-        category,
         type,
         amount,
         paymentMethod,
