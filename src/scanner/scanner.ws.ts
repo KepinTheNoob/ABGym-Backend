@@ -23,7 +23,12 @@ export function startScannerServer() {
 
       try {
         const member = await prisma.members.findUnique({
-          where: { id: memberId },
+          where: {
+            id: memberId,
+          },
+          include: {
+            plans: true,
+          },
         });
 
         let response: any;
@@ -49,7 +54,13 @@ export function startScannerServer() {
 
           response = {
             type: "ACCESS_GRANTED",
-            name: member.name,
+            member: {
+              id: member.id,
+              name: member.name,
+              expirationDate: member.expirationDate,
+              plan: member.plans?.name,
+            },
+            checkInTime: new Date().toISOString(),
           };
         }
 

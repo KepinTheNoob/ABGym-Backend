@@ -45,7 +45,19 @@ export default class AttendancesController {
 
   static async getAttendances(req: Request, res: Response, next: NextFunction) {
     try {
-      const attendances = await prisma.attendance.findMany();
+      const attendances = await prisma.attendance.findMany({
+        include: {
+          member: {
+            select: {
+              name: true,
+              profilePhoto: true,
+            },
+          },
+        },
+        orderBy: {
+          checkInTime: "desc",
+        },
+      });
 
       successRes(res, attendances);
     } catch (error: any) {
