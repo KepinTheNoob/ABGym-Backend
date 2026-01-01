@@ -3,3 +3,4 @@ export { default as TransactionsController } from "./transactionsController";
 export { default as AttendancesController } from "./attendancesController";
 export { default as PlansController } from "./plansController";
 export { default as CategoriesController } from "./categoriesController";
+export { default as AuthController } from "./authController";
