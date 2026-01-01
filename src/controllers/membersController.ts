@@ -8,19 +8,25 @@ import {
   successRes,
 } from "../utils";
 import { locale } from "../locales";
+import cloudinary from "../utils/cloudinary";
 
 const prisma = new PrismaClient();
+
+interface MulterRequest extends Request {
+    file: any;
+}
 
 export default class MembersController {
   static async createMember(req: Request, res: Response, next: NextFunction) {
     try {
+      const requestWithFile = req as MulterRequest;
+
       const {
         name,
         email,
         phone,
         dob,
         address,
-        profilePhoto,
         joinDate,
         planId,
       } = req.body;
@@ -28,6 +34,19 @@ export default class MembersController {
       if (!name || !email || !phone || !dob || !planId) {
         errBadRequest(next, locale.payloadInvalid);
         return;
+      }
+
+      let profilePhotoUrl = null;
+
+      if (requestWithFile.file) {
+        const b64 = Buffer.from(requestWithFile.file.buffer).toString("base64");
+        let dataURI = "data:" + requestWithFile.file.mimetype + ";base64," + b64;
+
+        const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+          folder: "gym-members",
+        });
+
+        profilePhotoUrl = uploadResponse.secure_url;
       }
 
       const existingMember = await prisma.members.findUnique({
@@ -62,7 +81,7 @@ export default class MembersController {
           phone,
           dob: new Date(dob),
           address,
-          profilePhoto,
+          profilePhoto: profilePhotoUrl,
           joinDate: startDate,
           expirationDate: expirationDate,
           planId: Number(planId),
@@ -96,6 +115,7 @@ export default class MembersController {
 
       successRes(res, newMember);
     } catch (error: any) {
+      console.error(error);
       if (errorUnique(error)) {
         errBadRequest(next, error.message);
         return;
