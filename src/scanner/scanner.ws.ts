@@ -59,6 +59,7 @@ export function startScannerServer() {
               name: member.name,
               expirationDate: member.expirationDate,
               plan: member.plans?.name,
+              profilePhoto: member.profilePhoto ?? null,
             },
             checkInTime: new Date().toISOString(),
           };

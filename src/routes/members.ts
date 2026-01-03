@@ -16,6 +16,7 @@ router.put(
   upload.single("profilePhoto"), 
   MembersController.updateMember
 );
+router.post("/:id/renew", MembersController.renewMember);
 router.delete("/:id", MembersController.deleteMember);
 
 export default router;

@@ -275,6 +275,77 @@ export default class MembersController {
     }
   }
 
+  static async renewMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { planId, joinDate, paymentMethod } = req.body;
+
+      if (!planId) {
+        errBadRequest(next, "Plan ID is required for renewal");
+        return;
+      }
+
+      const member = await prisma.members.findUnique({
+        where: { id: String(id) },
+      });
+      const plan = await prisma.plans.findUnique({
+        where: { id: Number(planId) },
+      });
+
+      if (!member || !plan) {
+        errBadRequest(next, "Member or Plan not found");
+        return;
+      }
+
+      const startDate = joinDate ? new Date(joinDate) : new Date();
+
+      const expirationDate = calculateExpiration(
+        startDate,
+        plan.durationValue,
+        plan.durationUnit
+      );
+
+      const result = await prisma.$transaction(async (tx) => {
+        const updatedMember = await tx.members.update({
+          where: { id: String(id) },
+          data: {
+            joinDate: startDate,
+            expirationDate: expirationDate,
+            planId: Number(planId), 
+          },
+        });
+
+        let category = await tx.categories.findFirst({
+          where: { name: "Membership" },
+        });
+
+        if (!category) {
+          category = await tx.categories.create({
+            data: { name: "Membership", description: "Membership payments" },
+          });
+        }
+
+        await tx.transactions.create({
+          data: {
+            memberId: member.id,
+            categoryId: category.id,
+            description: `Renewal - ${plan.name}`,
+            type: "Income",
+            amount: plan.price,
+            paymentMethod: paymentMethod || "Cash",
+            transactionDate: new Date(),
+          },
+        });
+
+        return updatedMember;
+      });
+
+      successRes(res, result);
+    } catch (error: any) {
+      errInternalServer(next);
+    }
+  }
+
   static async deleteMember(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
@@ -327,10 +398,15 @@ function calculateExpiration(
 
 function determineMemberStatus(expirationDate: Date) {
   const now = new Date();
+
+  if (now.getTime() > expirationDate.getTime()) {
+    return "Expired";
+  }
+
   const diffMs = expirationDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) return "Expired";
   if (diffDays <= 7) return "Expiring";
+  
   return "Active";
 }
