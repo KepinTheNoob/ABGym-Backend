@@ -9,11 +9,12 @@ import {
 } from "../utils";
 import { locale } from "../locales";
 import cloudinary from "../utils/cloudinary";
+import sharp from "sharp";
 
 const prisma = new PrismaClient();
 
 interface MulterRequest extends Request {
-    file: any;
+  file: any;
 }
 
 export default class MembersController {
@@ -21,15 +22,7 @@ export default class MembersController {
     try {
       const requestWithFile = req as MulterRequest;
 
-      const {
-        name,
-        email,
-        phone,
-        dob,
-        address,
-        joinDate,
-        planId,
-      } = req.body;
+      const { name, email, phone, dob, address, joinDate, planId } = req.body;
 
       if (!name || !email || !phone || !dob || !planId) {
         errBadRequest(next, locale.payloadInvalid);
@@ -40,7 +33,8 @@ export default class MembersController {
 
       if (requestWithFile.file) {
         const b64 = Buffer.from(requestWithFile.file.buffer).toString("base64");
-        let dataURI = "data:" + requestWithFile.file.mimetype + ";base64," + b64;
+        let dataURI =
+          "data:" + requestWithFile.file.mimetype + ";base64," + b64;
 
         const uploadResponse = await cloudinary.uploader.upload(dataURI, {
           folder: "gym-members",
@@ -182,22 +176,11 @@ export default class MembersController {
 
   static async updateMember(req: Request, res: Response, next: NextFunction) {
     try {
+      const requestWithFile = req as MulterRequest;
       const { id } = req.params;
-      const {
-        name,
-        email,
-        phone,
-        dob,
-        address,
-        profilePhoto,
-        joinDate,
-        planId,
-      } = req.body;
 
-      if (!name || !email || !phone || !dob || !planId) {
-        errBadRequest(next, locale.payloadInvalid);
-        return;
-      }
+      const { name, email, phone, dob, address, joinDate, planId } = req.body;
+      console.log(req.body);
 
       const existingMember = await prisma.members.findUnique({
         where: { id: String(id) },
@@ -208,6 +191,24 @@ export default class MembersController {
         return;
       }
 
+      let finalProfilePhoto = existingMember.profilePhoto;
+
+      if (requestWithFile.file) {
+        const optimizedBuffer = await sharp(requestWithFile.file.buffer)
+          .resize({ width: 300, height: 300, fit: "cover" })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+
+        const b64 = optimizedBuffer.toString("base64");
+        const dataURI = "data:image/jpeg;base64," + b64;
+
+        const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+          folder: "gym-members",
+        });
+
+        finalProfilePhoto = uploadResponse.secure_url;
+      }
+
       let finalJoinDate = existingMember.joinDate;
       let finalExpirationDate = existingMember.expirationDate;
       let finalPlanId = existingMember.planId;
@@ -216,9 +217,16 @@ export default class MembersController {
         finalJoinDate = new Date(joinDate);
       }
 
-      if (Number(planId) !== existingMember.planId) {
+      const isPlanChanged = planId && Number(planId) !== existingMember.planId;
+      const isDateChanged =
+        joinDate &&
+        new Date(joinDate).getTime() !== existingMember.joinDate.getTime();
+
+      if (isPlanChanged || isDateChanged) {
+        const targetPlanId = planId ? Number(planId) : existingMember.planId;
+
         const plan = await prisma.plans.findUnique({
-          where: { id: Number(planId) },
+          where: { id: targetPlanId },
         });
 
         if (!plan) {
@@ -232,7 +240,7 @@ export default class MembersController {
           plan.durationUnit
         );
 
-        finalPlanId = Number(planId);
+        finalPlanId = targetPlanId;
       }
 
       const updatedMember = await prisma.members.update({
@@ -241,9 +249,9 @@ export default class MembersController {
           name,
           email,
           phone,
-          dob: new Date(dob),
+          ...(dob && { dob: new Date(dob) }),
           address,
-          profilePhoto,
+          profilePhoto: finalProfilePhoto,
           joinDate: finalJoinDate,
           expirationDate: finalExpirationDate,
           planId: finalPlanId,
@@ -252,6 +260,7 @@ export default class MembersController {
 
       successRes(res, updatedMember);
     } catch (error: any) {
+      console.error(error);
       if (errorUnique(error)) {
         errBadRequest(next, error.message);
         return;

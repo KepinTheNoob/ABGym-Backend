@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 enum TransactionType {
@@ -32,15 +32,15 @@ model Users {
 }
 
 model Members {
-  id                String                   @id @default(uuid())
+  id                String                @id @default(uuid())
   name              String
   email             String                @unique
   phone             String
-  dob               DateTime
+  dob               DateTime              @default(now())
   address           String?
   profilePhoto      String?
-  joinDate          DateTime
-  expirationDate    DateTime
+  joinDate          DateTime              @default(now())
+  expirationDate    DateTime              @default(now())
 
   planId   Int
   plans      Plans      @relation(fields: [planId], references: [id])
@@ -50,9 +50,9 @@ model Members {
 }
 
 model Plans {
-  id             Int       @id @default(autoincrement())
+  id             Int              @id @default(autoincrement())
   name           String
-  price          Decimal    @db.Decimal(10, 2)
+  price          Decimal          
   durationValue  Int
   durationUnit   DurationUnit
 
@@ -60,25 +60,25 @@ model Plans {
 }
 
 model Transactions {
-  id               String               @id @default(uuid())
+  id               String                @id @default(uuid())
   memberId         String?
   categoryId       Int
-  category         Categories?        @relation(fields: [categoryId], references: [id])
-  member           Members?          @relation(fields: [memberId], references: [id])
+  category         Categories?           @relation(fields: [categoryId], references: [id])
+  member           Members?              @relation(fields: [memberId], references: [id])
 
   description      String
   type             TransactionType
-  amount           Decimal           @db.Decimal(10, 2)
+  amount           Decimal               
   paymentMethod    PaymentMethod
-  transactionDate  DateTime
+  transactionDate  DateTime              @default(now())
 }
 
 model Attendance {
-  id            String       @id @default(uuid())
+  id            String                @id @default(uuid())
   memberId      String
-  member        Members   @relation(fields: [memberId], references: [id])
+  member        Members               @relation(fields: [memberId], references: [id])
 
-  checkInTime   DateTime
+  checkInTime   DateTime              @default(now())
   checkOutTime  DateTime?
 }
 
