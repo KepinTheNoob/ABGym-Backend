@@ -170,4 +170,20 @@ export default class TransactionsController {
       errInternalServer(next);
     }
   }
+
+  static async clearAllTransactions(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      await prisma.transactions.deleteMany({}); // hapus semua transaksi
+
+      successRes(res, { message: "All transactions deleted successfully" });
+    } catch (error: any) {
+      console.error("Clear transactions error:", error);
+
+      errInternalServer(next);
+    }
+  }
 }
