@@ -177,11 +177,14 @@ export default class TransactionsController {
     next: NextFunction
   ) {
     try {
-      await prisma.transactions.deleteMany({}); // hapus semua transaksi
+      await prisma.transactions.deleteMany();
 
-      successRes(res, { message: "All transactions deleted successfully" });
+      successRes(res, locale.successfullyDeleted);
     } catch (error: any) {
-      console.error("Clear transactions error:", error);
+      if (errorValidation(error)) {
+        errBadRequest(next, error.message);
+        return;
+      }
 
       errInternalServer(next);
     }
