@@ -11,7 +11,6 @@ import { locale } from "../locales";
 import cloudinary from "../utils/cloudinary";
 import sharp from "sharp";
 
-
 const prisma = new PrismaClient();
 
 interface MulterRequest extends Request {
@@ -312,7 +311,7 @@ export default class MembersController {
           data: {
             joinDate: startDate,
             expirationDate: expirationDate,
-            planId: Number(planId), 
+            planId: Number(planId),
           },
         });
 
@@ -374,25 +373,27 @@ function calculateExpiration(
   value: number,
   unit: "Day" | "Week" | "Month" | "Year"
 ) {
-  const date = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const date = new Date(start);
 
   switch (unit) {
     case "Day":
-      date.setDate(date.getDate() + value);
+      date.setUTCDate(date.getUTCDate() + value);
       break;
+
     case "Week":
-      date.setDate(date.getDate() + value * 7);
+      date.setUTCDate(date.getUTCDate() + value * 7);
       break;
+
     case "Month":
-      date.setMonth(date.getMonth() + value);
+      date.setUTCDate(date.getUTCDate() + value * 30);
       break;
+
     case "Year":
-      date.setFullYear(date.getFullYear() + value);
+      date.setUTCFullYear(date.getUTCFullYear() + value);
       break;
   }
-  date.setDate(date.getDate() + 1);
 
-  date.setUTCHours(23, 59, 59, 999);
+  date.setUTCHours(16, 59, 59, 999);
 
   return date;
 }
@@ -408,6 +409,6 @@ function determineMemberStatus(expirationDate: Date) {
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays <= 7) return "Expiring";
-  
+
   return "Active";
 }
