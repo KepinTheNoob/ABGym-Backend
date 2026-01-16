@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PaymentMethod, PrismaClient } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import {
   errBadRequest,
@@ -22,7 +22,7 @@ export default class MembersController {
     try {
       const requestWithFile = req as MulterRequest;
 
-      const { name, email, phone, dob, address, joinDate, planId } = req.body;
+      const { name, email, phone, dob, address, joinDate, planId, paymentMethod } = req.body;
 
       if (!name || !email || !phone || !dob || !planId) {
         errBadRequest(next, locale.payloadInvalid);
@@ -102,7 +102,7 @@ export default class MembersController {
           description: `Membership payment - ${plan.name}`,
           type: "Income",
           amount: plan.price,
-          paymentMethod: "Cash",
+          paymentMethod: paymentMethod || "Cash",
           transactionDate: new Date(),
         },
       });
@@ -179,7 +179,7 @@ export default class MembersController {
       const requestWithFile = req as MulterRequest;
       const { id } = req.params;
 
-      const { name, email, phone, dob, address, joinDate, planId } = req.body;
+      const { name, email, phone, dob, address, joinDate, planId, paymentMethod } = req.body;
       console.log(req.body);
 
       const existingMember = await prisma.members.findUnique({
